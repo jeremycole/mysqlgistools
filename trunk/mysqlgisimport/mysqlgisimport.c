@@ -32,7 +32,7 @@
 #include <mygis/shapefile.h>
 #include <mygis/wkt/wkt.h>
 
-#include <mygis/dbug.h>
+#include "dbug/dbug.h"
 
 const char *program = {"mysqlgisimport"};
 const char *version = {"0.5"};

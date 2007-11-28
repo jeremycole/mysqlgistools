@@ -1,4 +1,4 @@
-SUBDIRS = mysqlgisimport .
+SUBDIRS = dbug mysqlgisimport .
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 configure config.status config.log config.h \
