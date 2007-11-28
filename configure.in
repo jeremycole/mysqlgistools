@@ -104,7 +104,7 @@ AC_CHECK_FUNC(getline,
             [GNU extension, getline function])
 )
 
-AC_OUTPUT(Makefile mysqlgisimport/Makefile extra/Makefile)
+AC_OUTPUT(Makefile dbug/Makefile mysqlgisimport/Makefile extra/Makefile)
 
 cat <<EOS
 
