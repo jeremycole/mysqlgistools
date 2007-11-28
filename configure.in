@@ -1,0 +1,130 @@
+AC_INIT()
+AC_CANONICAL_SYSTEM
+
+AM_INIT_AUTOMAKE("mysqlgistools", "0.8.0")
+AM_CONFIG_HEADER(config.h)
+
+AC_PROG_CC
+AC_PROG_LIBTOOL
+
+AC_C_CONST
+AC_C_INLINE
+
+AC_FUNC_CHOWN
+#AC_FUNC_MALLOC
+#AC_FUNC_REALLOC
+AC_FUNC_VPRINTF
+AC_FUNC_CRYPT
+
+AC_STRUCT_TM
+AC_TYPE_SIZE_T
+
+AC_CHECK_SIZEOF([void *])
+AC_CHECK_SIZEOF([double])
+
+# from http://sourceware.org/autobook/autobook/autobook_84.html#SEC84
+for top_builddir in . .. ../.. $ac_auxdir $ac_auxdir/..; do
+  test -f $top_builddir/configure && break
+done
+
+# Projection support via PROJ.4
+want_projection="no"
+AC_ARG_WITH(projection,
+  [  --with-projection       build with projection support via PROJ.4],
+  [
+    if test "x$withval" != "xno"
+    then
+      AC_DEFINE([HAVE_PROJECTION], [], [Projection Support])
+      want_projection="yes"
+    fi
+  ],,
+)
+
+# PROJ.4 Library
+AC_LIB_PROJ
+
+# MySQL
+want_mysql="no"
+AC_ARG_WITH(mysql,
+  [  --with-mysql            build with MySQL support],
+  [
+    if test "x$withval" != "xno"
+    then
+      AC_DEFINE([HAVE_MYSQL], [], [MySQL Support])
+      want_mysql="yes"
+    fi
+  ],,
+)
+
+# libmygis
+AC_LIB_MYGIS
+
+# MySQL Libraries and Headers
+AC_LIB_MYSQL
+AC_HEADER_MYSQL
+AC_LIB_Z_FOR_MYSQL
+
+AC_CHECK_HEADERS([stdio.h stdlib.h string.h errno.h sys/types.h sys/stat.h fcntl.h sys/param.h])
+
+
+AC_ARG_WITH(debug,
+  [  --with-debug            build with debugging support enabled],
+  [ AC_DEFINE(DEBUG,,
+              [debugging support])
+    CFLAGS="$CFLAGS -Wall -ggdb"
+  ],,
+)
+
+AC_ARG_WITH(profiling,
+  [  --with-profiling        build with profiling support enabled],
+  [
+    AC_DEFINE(PROFILING,,
+              [profiling support])
+    CFLAGS="$CFLAGS -pg"
+  ],,
+)
+
+AC_CHECK_HEADERS(getopt.h, have_getopt_h=yes, [ 
+  unset ac_cv_header_getopt_h
+  CFLAGS="$CFLAGS -I/usr/local/include -L/usr/local/lib -lgnugetopt "
+  AC_CHECK_HEADERS(getopt.h, have_getopt_h=yes, [ 
+    AC_MSG_ERROR([Couldn't find getopt.h])
+  ])
+])
+
+AC_CHECK_FUNCS([bzero strcasecmp strdup strerror strndup strrchr])
+
+AC_CHECK_FUNC(strndup,
+  AC_DEFINE(HAVE_STRNDUP,,
+            [GNU extension, strndup function])
+)
+
+AC_CHECK_FUNC(getline,
+  AC_DEFINE(HAVE_GETLINE,,
+            [GNU extension, getline function])
+)
+
+AC_OUTPUT(Makefile mysqlgisimport/Makefile extra/Makefile)
+
+cat <<EOS
+
+Done!
+
+
+
+
+
+
+
+Building mysqlgistools with the following options:
+
+MySQL client library support................. $want_mysql
+Projection support........................... $want_projection
+
+If this is not what you intended, please re-run configure with different
+options.  You may use ``configure --help'' to see the available options.
+
+Thanks for using libmygis!
+
+
+EOS
