@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2004-2005, Jeremy Cole and others
+    Copyright (c) 2004-2008, Jeremy Cole and others
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -82,10 +82,10 @@ void usage(FILE *f)
   fprintf(f, "  -S, --no-shp         Don't use a SHP (shape) file, implies --no-shx.\n");
   fprintf(f, "  -X, --no-shx         Don't use a SHX (shape index) file.\n");
   fprintf(f, "  -P, --no-prj         Don't use a PRJ (projection) file.\n");
-  
+
   fprintf(f, "\nFilter Options:\n");
   fprintf(f, "  -q, --query          DBF query of form: \"FIELD=value\".\n");
-  
+
   fprintf(f, "\nDatabase Options:\n");
   fprintf(f, "  -t, --table          Table name to load records into.\n");
   fprintf(f, "  -r, --remap          Remap a DBF column to a another name.\n");
@@ -94,7 +94,7 @@ void usage(FILE *f)
              "                       Name of auto-incremented primary key field (default `id').\n");
   fprintf(f, "  -p, --primary-key    Name (after remap) of existing field to use as our primary key.\n");
   fprintf(f, "  -g, --geometry-field Name of GEOMETRY field, default `geo` or `geo_as_text`.\n");
-  
+
   fprintf(f, "\nOutput Options:\n");
   fprintf(f, "  -o, --output         Output to a file, defaults to stdout.\n");
   fprintf(f, "  -s, --no-schema      Don't output any schema, only the data.\n");
@@ -191,7 +191,7 @@ void print_single_quoted_string(FILE *f, char *str)
       else
         fputc(str[i], f);
     }
-  
+
   fprintf(f, "'");
 
   DBUG_VOID_RETURN;
@@ -204,7 +204,7 @@ void print_single_quoted_string(FILE *f, char *str)
 void print_delimited_string(FILE *f, char *str)
 {
   int i;
- 
+
   DBUG_ENTER("print_delimited_string");
 
   /* print characters in the string one by one */
@@ -222,7 +222,7 @@ void print_delimited_string(FILE *f, char *str)
       else
         fputc(str[i], f);
      }
-  
+
   DBUG_VOID_RETURN;
 }
 
@@ -270,7 +270,7 @@ void print_sql_cell(FILE *f, CELL *cell, int opt_delimited)
   DBUG_VOID_RETURN;
 }
 
-void print_schema(FILE *f, SHAPEFILE *sha, 
+void print_schema(FILE *f, SHAPEFILE *sha,
                   char *table_name, char *geometry_field,
                   PAIRLIST *remap,
                   char *auto_increment_key, char *primary_key,
@@ -286,15 +286,15 @@ void print_schema(FILE *f, SHAPEFILE *sha,
 
   fprintf(f, "DROP TABLE IF EXISTS `%s`;\n", table_name);
   fprintf(f, "CREATE TABLE `%s` (\n", table_name);
-  
+
   if (auto_increment_key)
     fprintf(f, "  %-20s INT UNSIGNED NOT NULL auto_increment,\n", sql_backquote(auto_increment_key));
 
 
   if(sha->flags & SHAPEFILE_HAS_DBF) {
     FOREACH_DBF_FIELD(dbf, field, i) {
-      fprintf(f, "  %-20s %s,\n", 
-              sql_field_name(field, remap), 
+      fprintf(f, "  %-20s %s,\n",
+              sql_field_name(field, remap),
               sql_field_type(field));
     }
   }
@@ -321,7 +321,7 @@ void print_schema(FILE *f, SHAPEFILE *sha,
 }
 
 void print_record(FILE *f,
-                  SHAPEFILE_RECORD *record, 
+                  SHAPEFILE_RECORD *record,
                   char *table_name,
                   char *auto_increment_key,
                   int opt_delimited,
@@ -352,7 +352,7 @@ void print_record(FILE *f,
     else
       fprintf(f, "NULL");
   }
-  
+
   if(sha->flags & SHAPEFILE_HAS_DBF) {
     for(; cell_node; cell_node = cell_node->next) {
       cell = cell_node->cell;
@@ -377,17 +377,17 @@ void print_record(FILE *f,
       fprintf(f, "'");
 
     wkt_write(record->geometry, sha->projection, f);
-    
+
     if (!opt_delimited)
       fprintf(f, "'");
 
-    if (!opt_geometry_as_text)    
+    if (!opt_geometry_as_text)
       fprintf(f, ")");
   }
-  
+
   if (!opt_delimited)
     fprintf(f, "\n);");
-  
+
   fprintf(f, "\n");
 
   DBUG_VOID_RETURN;
@@ -497,7 +497,7 @@ int main(int argc, char **argv)
       if(!(ptr=strchr(optarg, '=')))
         goto err1;
       *ptr++ = '\0';
-      pairlist_add(remap, optarg, ptr); 
+      pairlist_add(remap, optarg, ptr);
       break;
     case 'a':
       auto_increment_key = (char *)strdup(optarg);
@@ -515,7 +515,7 @@ int main(int argc, char **argv)
       }
     }
   }
-  
+
   if(primary_key && auto_increment_key) {
     fprintf(stderr, "You can't specify both --auto-increment-key and --primary-key at the same time.  \n");
     goto err1;
@@ -560,9 +560,9 @@ int main(int argc, char **argv)
   proj = projection_init();
 
   /* open each shapefile and start processing */
-  
-  for (filename_arg_index = optind; 
-       filename_arg_index < argc; 
+
+  for (filename_arg_index = optind;
+       filename_arg_index < argc;
        filename_arg_index++)
     {
 
@@ -575,7 +575,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Couldn't open files, missing files?\n");
         ret = 3; goto err2;
       }
-      
+
       if(sha->flags & SHAPEFILE_HAS_PRJ)
       {
         projection_set(proj, sha->prj->proj4_def, "+proj=latlong");
@@ -594,7 +594,7 @@ int main(int argc, char **argv)
       /* if this is the first file, print out
          a CREATE TABLE statement */
       if(filename_arg_index == optind && !opt_no_schema)
-        print_schema(output, sha, table_name, geometry_field, remap, 
+        print_schema(output, sha, table_name, geometry_field, remap,
                      auto_increment_key, primary_key, opt_geometry_as_text);
 
       if(!opt_no_data) {
@@ -607,7 +607,7 @@ int main(int argc, char **argv)
           print_record(output, rec, table_name, auto_increment_key,
                        opt_delimited, opt_geometry_as_text);
           shapefile_record_free(rec);
-        } 
+        }
         shapefile_scan_free(scan);
       }
 
