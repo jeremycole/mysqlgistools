@@ -6,6 +6,6 @@ bin_PROGRAMS = \
 mysqlgisimport_SOURCES = mysqlgisimport.c
 mysqlgisimport_LDADD = ../dbug/libdbug.la
 
-INCLUDES = -I$(srcdir) -I..
+INCLUDES = -I$(srcdir) -I$(srcdir)/..
 
 all: $(OBJS)
