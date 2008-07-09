@@ -1,3 +1,3 @@
-#!/bin/sh
+#!/bin/sh -x
 
-libtoolize ; aclocal ; autoconf ; autoheader ; automake --add-missing
+libtoolize -c ; aclocal ; autoconf ; autoheader ; automake -a -c
