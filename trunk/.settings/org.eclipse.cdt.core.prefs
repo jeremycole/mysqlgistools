@@ -1,0 +1,3 @@
+#Tue Jul 08 17:53:59 PDT 2008
+eclipse.preferences.version=1
+environment/project/com.redhat.eclipse.cdt.autotools.configuration.build.399883480=<?xml version\="1.0" encoding\="UTF-8"?>\n<environment append\="true" appendContributed\="true">\n<variable delimiter\=";" name\="PATH" operation\="append" value\="/usr/bin\:/bin\:/usr/sbin\:/sbin;/usr/local/bin\:/sw/bin\:/sw/sbin\:/bin\:/sbin\:/usr/bin"/>\n</environment>\n
