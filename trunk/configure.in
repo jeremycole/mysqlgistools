@@ -1,7 +1,7 @@
 AC_INIT()
 AC_CANONICAL_SYSTEM
 
-AM_INIT_AUTOMAKE("mysqlgistools", "0.8.0")
+AM_INIT_AUTOMAKE("mysqlgistools", "0.5.0")
 AM_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
@@ -26,22 +26,6 @@ AC_CHECK_SIZEOF([double])
 for top_builddir in . .. ../.. $ac_auxdir $ac_auxdir/..; do
   test -f $top_builddir/configure && break
 done
-
-# Projection support via PROJ.4
-want_projection="no"
-AC_ARG_WITH(projection,
-  [  --with-projection       build with projection support via PROJ.4],
-  [
-    if test "x$withval" != "xno"
-    then
-      AC_DEFINE([HAVE_PROJECTION], [], [Projection Support])
-      want_projection="yes"
-    fi
-  ],,
-)
-
-# PROJ.4 Library
-AC_LIB_PROJ
 
 # MySQL
 want_mysql="no"
@@ -119,7 +103,6 @@ Done!
 Building mysqlgistools with the following options:
 
 MySQL client library support................. $want_mysql
-Projection support........................... $want_projection
 
 If this is not what you intended, please re-run configure with different
 options.  You may use ``configure --help'' to see the available options.
