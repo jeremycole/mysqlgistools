@@ -32,10 +32,14 @@
 #include <mygis/shapefile.h>
 #include <mygis/wkt/wkt.h>
 
+#include "mysqlgistools.h"
 #include "dbug/dbug.h"
 
-const char *program = {"mysqlgisimport"};
-const char *version = {"0.5"};
+const char *program = { "mysqlgisimport" };
+const char *version = { "0.5.1" };
+const char *copyright = {
+  "Copyright (c) 2004-2008, Jeremy Cole and others"
+};
 
 static const char *short_options = {"?dDXPSsnt:q:g:o:r:a:p:Gi"};
 static struct option long_options[] = {
@@ -65,9 +69,11 @@ void usage(FILE *f)
 {
   DBUG_ENTER("usage");
   fprintf(f, "\n");
-  fprintf(f, "%s %s, %s\n", program, version, mygis_version);
-  fprintf(f, "%s\n", mygis_copyright);
-  fprintf(f, "Distributed under the %s\n", mygis_license);
+  fprintf(f, "%s %s, from %s, using %s\n", program, version,
+    mysqlgistools_version, mygis_version);
+  fprintf(f, "%s is %s", program, copyright);
+  fprintf(f, "\n");
+  fprintf(f, "Distributed under the %s\n", mysqlgistools_license);
   fprintf(f, "\n");
   fprintf(f, "Usage: %s [options] <shapefile> [ <shapefile> ... ]\n", program);
 
