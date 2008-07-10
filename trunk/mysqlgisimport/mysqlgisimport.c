@@ -41,7 +41,7 @@ const char *copyright = {
   "Copyright (c) 2004-2008, Jeremy Cole and others"
 };
 
-static const char *short_options = {"?dDXPSsnt:q:g:o:r:a:p:Gi"};
+static const char *short_options = {"?dDSXPsnt:q:g:o:r:a:p:Gi"};
 static struct option long_options[] = {
   {"help",                no_argument,       NULL, '?'},
 #ifdef DEBUG
@@ -114,43 +114,49 @@ void usage(FILE *f)
   DBUG_VOID_RETURN;
 }
 
-char *sql_table_name(char *name)
+char *sql_backquote(char *object_name)
 {
-  static char sql[200];
+  /* TODO: Shouldn't really be static, since the object name could be quite
+   * long in reality.
+   */
+  /* TODO: Need to do some cleanup of the object name. */
 
-  DBUG_ENTER("sql_table_name");
-  sprintf(sql, "`%s`", name);
-  DBUG_RETURN(sql);
-}
-
-
-char *sql_backquote(char * field_name)
-{
   static char sql[200];
 
   DBUG_ENTER("sql_backquote");
-  /* TODO: Need to do some cleanup of the field name. */
-  sprintf(sql, "`%s`", field_name);
+  sprintf(sql, "`%s`", object_name);
   DBUG_RETURN(sql);
 }
 
-
-char *sql_field_name(DBF_FIELD *field, PAIRLIST *remap)
+char *sql_table_name(char *table_name)
 {
-  DBUG_ENTER("sql_field_name");
-  DBUG_RETURN(sql_backquote(pairlist_get_value(remap, field->name)));
+  DBUG_ENTER("sql_table_name");
+  DBUG_RETURN(sql_backquote(table_name));
+}
+
+char *sql_field_name(char *field_name)
+{
+  DBUG_ENTER("sql_table_name");
+  DBUG_RETURN(sql_backquote(field_name));
+}
+
+char *sql_dbf_field_name(DBF_FIELD *field, PAIRLIST *remap)
+{
+  DBUG_ENTER("sql_dbf_field_name");
+  DBUG_RETURN(sql_field_name(pairlist_get_value(remap, field->name)));
 }
 
 
-char *sql_field_type(DBF_FIELD *field)
+char *sql_dbf_field_type(DBF_FIELD *field)
 {
   static char sql[200];
 
-  DBUG_ENTER("sql_field_type");
+  DBUG_ENTER("sql_dbf_field_type");
 
   if(!field) DBUG_RETURN(NULL);
 
-  switch(field->type) {
+  switch(field->type)
+  {
   case DBF_CHARACTER:
     sprintf(sql, "CHAR(%i) NOT NULL", field->length);
     break;
@@ -159,12 +165,16 @@ char *sql_field_type(DBF_FIELD *field)
     break;
   case DBF_NUMBER:
     if (field->decimals)
+    {
       sprintf(sql, "DOUBLE(%i,%i) NOT NULL", field->length, field->decimals);
-    else
+    } else {
       if (field->length <= 9)
+      {
         sprintf(sql, "INT(%i) NOT NULL", field->length);
-      else
+      } else {
         sprintf(sql, "BIGINT(%i) NOT NULL", field->length);
+      }
+    }
     break;
   case DBF_FLOATING:
     sprintf(sql, "DOUBLE(%i,%i) NOT NULL", field->length, field->decimals);
@@ -177,7 +187,7 @@ char *sql_field_type(DBF_FIELD *field)
 }
 
 /*
-  print str to f as a single quoted string. Single quotes
+  Print str to f as a single quoted string. Single quotes
   will be escaped as ''. For instance, "don't" becomes
   "'don''t'"
 */
@@ -191,12 +201,12 @@ void print_single_quoted_string(FILE *f, char *str)
 
   /* print characters in the string one by one */
   for (i = 0; str[i] != '\0'; i++)
-    {
-      if (str[i] == '\'')
-        fprintf(f, "''");
-      else
-        fputc(str[i], f);
-    }
+  {
+    if (str[i] == '\'')
+      fprintf(f, "''");
+    else
+      fputc(str[i], f);
+  }
 
   fprintf(f, "'");
 
@@ -215,19 +225,19 @@ void print_delimited_string(FILE *f, char *str)
 
   /* print characters in the string one by one */
   for (i = 0; str[i] != '\0'; i++)
-    {
-      if (str[i] == '\\')
-        fprintf(f, "\\\\");
+  {
+    if (str[i] == '\\')
+      fprintf(f, "\\\\");
 
-      else if (str[i] == '\t')
-        fprintf(f, "\\t");
+    else if (str[i] == '\t')
+      fprintf(f, "\\t");
 
-      else if (str[i] == '\n')
-        fprintf(f, "\\n");
+    else if (str[i] == '\n')
+      fprintf(f, "\\n");
 
-      else
-        fputc(str[i], f);
-     }
+    else
+      fputc(str[i], f);
+   }
 
   DBUG_VOID_RETURN;
 }
@@ -242,7 +252,8 @@ void print_sql_cell(FILE *f, CELL *cell, int opt_delimited)
 
   assert(cell);
 
-  switch(cell->metadata->data_type) {
+  switch(cell->metadata->data_type)
+  {
   case CHARACTER:
     if (opt_delimited)
       print_delimited_string(f, cell->data.character);
@@ -276,10 +287,13 @@ void print_sql_cell(FILE *f, CELL *cell, int opt_delimited)
   DBUG_VOID_RETURN;
 }
 
-void print_schema(FILE *f, SHAPEFILE *sha,
-                  char *table_name, char *geometry_field,
+void print_schema(FILE *f,
+                  SHAPEFILE *sha,
+                  char *table_name,
+                  char *geometry_field,
                   PAIRLIST *remap,
-                  char *auto_increment_key, char *primary_key,
+                  char *auto_increment_key,
+                  char *primary_key,
                   int opt_geometry_as_text)
 {
   DBF *dbf = sha->dbf;
@@ -294,32 +308,36 @@ void print_schema(FILE *f, SHAPEFILE *sha,
   fprintf(f, "CREATE TABLE `%s` (\n", table_name);
 
   if (auto_increment_key)
-    fprintf(f, "  %-20s INT UNSIGNED NOT NULL auto_increment,\n", sql_backquote(auto_increment_key));
+  {
+    fprintf(f, "  %-20s INT UNSIGNED NOT NULL auto_increment,\n", sql_field_name(auto_increment_key));
+  }
 
-
-  if(sha->flags & SHAPEFILE_HAS_DBF) {
-    FOREACH_DBF_FIELD(dbf, field, i) {
+  if(sha->flags & SHAPEFILE_HAS_DBF)
+  {
+    FOREACH_DBF_FIELD(dbf, field, i)
+    {
       fprintf(f, "  %-20s %s,\n",
-              sql_field_name(field, remap),
-              sql_field_type(field));
+              sql_dbf_field_name(field, remap),
+              sql_dbf_field_type(field));
     }
   }
 
-  if(sha->flags & SHAPEFILE_HAS_SHP) {
+  if(sha->flags & SHAPEFILE_HAS_SHP)
+  {
     if (opt_geometry_as_text)
-      {
-        fprintf(f, "  %-20s MEDIUMTEXT NOT NULL,\n",
-                sql_backquote(geometry_field));
-      } else {
-        fprintf(f, "  %-20s GEOMETRY NOT NULL,\n",
-                sql_backquote(geometry_field));
-        fprintf(f, "  SPATIAL INDEX (%s),\n",
-                sql_backquote(geometry_field));
-      }
+    {
+      fprintf(f, "  %-20s MEDIUMTEXT NOT NULL,\n",
+          sql_field_name(geometry_field));
+    } else {
+      fprintf(f, "  %-20s GEOMETRY NOT NULL,\n",
+          sql_field_name(geometry_field));
+      fprintf(f, "  SPATIAL INDEX (%s),\n",
+          sql_field_name(geometry_field));
+    }
   }
 
   fprintf(f, "  PRIMARY KEY (%s)\n",
-          sql_backquote(primary_or_auto_increment_key));
+      sql_field_name(primary_or_auto_increment_key));
 
   fprintf(f, ");\n\n");
 
@@ -352,15 +370,18 @@ void print_record(FILE *f,
     fprintf(f, "INSERT INTO `%s` VALUES (", table_name);
 
   /* dummy null value to fill in the auto-incremented field */
-  if (auto_increment_key) {
+  if (auto_increment_key)
+  {
     if (opt_delimited)
       fprintf(f, "\\N");
     else
       fprintf(f, "NULL");
   }
 
-  if(sha->flags & SHAPEFILE_HAS_DBF) {
-    for(; cell_node; cell_node = cell_node->next) {
+  if(sha->flags & SHAPEFILE_HAS_DBF)
+  {
+    for(; cell_node; cell_node = cell_node->next)
+    {
       cell = cell_node->cell;
       field = (DBF_FIELD *)cell->field;
 
@@ -372,10 +393,12 @@ void print_record(FILE *f,
     }
   }
 
-  if(sha->flags & SHAPEFILE_HAS_SHP) {
+  if(sha->flags & SHAPEFILE_HAS_SHP)
+  {
     fprintf(f, "%s", separator);
 
-    /* convert to a MySQL geometry object */
+    /* Convert to a MySQL geometry object */
+    /* TODO: We should handle writing this as WKB converted to hex */
     if (!opt_geometry_as_text)
       fprintf(f, "GEOMFROMTEXT(");
 
@@ -406,7 +429,8 @@ SHAPEFILE_SCAN *scan_query(SHAPEFILE *sha, char *query)
 
   DBUG_ENTER("scan_query");
 
-  if((p=index(query, '='))) {
+  if((p=index(query, '=')))
+  {
     key = query;
     *p = '\0';
     value = ++p;
@@ -438,7 +462,7 @@ int main(int argc, char **argv)
   int opt_no_schema        = 0;
   int opt_no_data          = 0;
   int opt_geometry_as_text = 0;
-  int opt_delimited    = 0;
+  int opt_delimited        = 0;
 
   char *table_name         = NULL;
   char *geometry_field     = NULL;
@@ -454,7 +478,8 @@ int main(int argc, char **argv)
   if(!(remap = pairlist_init(&compare_string_ci_eq, &compare_string_ci_eq)))
     DBUG_RETURN(1);
 
-  while(1) {
+  while(1)
+  {
     opt = getopt_long(argc, argv, short_options, long_options, &option_index);
     if (opt == -1) break;
 
@@ -484,20 +509,24 @@ int main(int argc, char **argv)
       opt_no_data++;
       break;
     case 't':
-      table_name = (char *)strdup(optarg);
+      table_name = (char *) strdup(optarg);
       break;
     case 'q':
-      query = (char *)strdup(optarg);
+      query = (char *) strdup(optarg);
       break;
     case 'g':
-      geometry_field = (char *)strdup(optarg);
+      geometry_field = (char *) strdup(optarg);
       break;
     case 'o':
-      if(optarg[0] == '-' && optarg[1] == '\0') break;
-      if(!(output = fopen(optarg, "w"))) {
+      if(optarg[0] == '-' && optarg[1] == '\0')
+        break;
+
+      if(!(output = fopen(optarg, "w")))
+      {
         fprintf(stderr, "Couldn't open output file `%s': Error %i: %s\n",
 	        optarg, errno, strerror(errno));
         goto err1;
+      }
       break;
     case 'r':
       if(!(ptr=strchr(optarg, '=')))
@@ -506,10 +535,10 @@ int main(int argc, char **argv)
       pairlist_add(remap, optarg, ptr);
       break;
     case 'a':
-      auto_increment_key = (char *)strdup(optarg);
+      auto_increment_key = (char *) strdup(optarg);
       break;
     case 'p':
-      primary_key = (char *)strdup(optarg);
+      primary_key = (char *) strdup(optarg);
       break;
     case 'G':
       opt_geometry_as_text++;
@@ -518,11 +547,11 @@ int main(int argc, char **argv)
       opt_delimited++;
       opt_no_schema++; /* can't output schema along with delimited format */
       break;
-      }
     }
   }
 
-  if(primary_key && auto_increment_key) {
+  if(primary_key && auto_increment_key)
+  {
     fprintf(stderr, "You can't specify both --auto-increment-key and --primary-key at the same time.  \n");
     goto err1;
   }
@@ -530,25 +559,33 @@ int main(int argc, char **argv)
   /* validate arguments */
 
   /* if there aren't any files specified */
-  if(optind == argc) {
+  if(optind == argc)
+  {
     usage(stderr);
-    ret = 1; goto err1;
+    ret = 1;
+    goto err1;
   }
 
   if((shapefile_flags & SHAPEFILE_NO_DBF) &&
-     (shapefile_flags & SHAPEFILE_NO_SHP)) {
+     (shapefile_flags & SHAPEFILE_NO_SHP))
+  {
     fprintf(stderr, "ERROR: You must have either a .shp or .dbf file.\n");
-    ret = 1; goto err1;
+    ret = 1;
+    goto err1;
   }
 
-  if (opt_delimited && !opt_geometry_as_text) {
+  if (opt_delimited && !opt_geometry_as_text)
+  {
     fprintf(stderr, "ERROR: You must specify -G with -i \n(can't yet output raw MySQL GEOMETRY records)\n");
-    ret = 1; goto err1;
+    ret = 1;
+    goto err1;
   }
 
-  if (auto_increment_key && primary_key) {
+  if (auto_increment_key && primary_key)
+  {
     fprintf(stderr, "ERROR: You may specify -a or -p, but not both \n(can only have one primary key)\n");
-    ret = 1; goto err1;
+    ret = 1;
+    goto err1;
   }
 
   /* set defaults */
@@ -570,54 +607,69 @@ int main(int argc, char **argv)
   for (filename_arg_index = optind;
        filename_arg_index < argc;
        filename_arg_index++)
+  {
+
+    if(!(sha = shapefile_init(shapefile_flags)))
     {
-
-      if(!(sha = shapefile_init(shapefile_flags))) {
-        fprintf(stderr, "Couldn't initialize, out of memory?\n");
-        ret = 2; goto err1;
-      }
-
-      if(shapefile_open(sha, argv[filename_arg_index], 'r') < 0) {
-        fprintf(stderr, "Couldn't open files, missing files?\n");
-        ret = 3; goto err2;
-      }
-
-      if(sha->flags & SHAPEFILE_HAS_PRJ)
-      {
-        projection_set(proj, sha->prj->proj4_def, "+proj=latlong");
-        shapefile_set_projection(sha, proj);
-      }
-
-      if(!table_name) table_name = (char *)strdup(basename(argv[optind]));
-
-      if(sha->flags & SHAPEFILE_HAS_DBF) {
-        FOREACH_DBF_FIELD(sha->dbf, field, i) {
-          if(!pairlist_get(remap, field->name))
-            pairlist_add(remap, field->name, field->name);
-        }
-      }
-
-      /* if this is the first file, print out
-         a CREATE TABLE statement */
-      if(filename_arg_index == optind && !opt_no_schema)
-        print_schema(output, sha, table_name, geometry_field, remap,
-                     auto_increment_key, primary_key, opt_geometry_as_text);
-
-      if(!opt_no_data) {
-        if(query) {
-          if(!(scan = scan_query(sha, query))) goto err3;
-        } else {
-          scan = shapefile_scan_init(sha, NULL, NULL, NULL);
-        }
-        while((rec = shapefile_scan_read_next(scan))) {
-          print_record(output, rec, table_name, auto_increment_key,
-                       opt_delimited, opt_geometry_as_text);
-          shapefile_record_free(rec);
-        }
-        shapefile_scan_free(scan);
-      }
-
+      fprintf(stderr, "Couldn't initialize, out of memory?\n");
+      ret = 2;
+      goto err1;
     }
+
+    if(shapefile_open(sha, argv[filename_arg_index], 'r') < 0)
+    {
+      fprintf(stderr, "Couldn't open files, missing files?\n");
+      ret = 3;
+      goto err2;
+    }
+
+    if(sha->flags & SHAPEFILE_HAS_PRJ)
+    {
+      projection_set(proj, sha->prj->proj4_def, "+proj=latlong");
+      shapefile_set_projection(sha, proj);
+    }
+
+    if(!table_name)
+    {
+      table_name = (char *) strdup(basename(argv[optind]));
+    }
+
+    if(sha->flags & SHAPEFILE_HAS_DBF)
+    {
+      FOREACH_DBF_FIELD(sha->dbf, field, i)
+      {
+        if(!pairlist_get(remap, field->name))
+          pairlist_add(remap, field->name, field->name);
+      }
+    }
+
+    /* if this is the first file, print out
+       a CREATE TABLE statement */
+    if(filename_arg_index == optind && !opt_no_schema)
+    {
+      print_schema(output, sha, table_name, geometry_field, remap,
+                   auto_increment_key, primary_key, opt_geometry_as_text);
+    }
+
+    if(!opt_no_data)
+    {
+      if(query)
+      {
+        if(!(scan = scan_query(sha, query)))
+          goto err3;
+      } else {
+        scan = shapefile_scan_init(sha, NULL, NULL, NULL);
+      }
+      while((rec = shapefile_scan_read_next(scan)))
+      {
+        print_record(output, rec, table_name, auto_increment_key,
+                     opt_delimited, opt_geometry_as_text);
+        shapefile_record_free(rec);
+      }
+      shapefile_scan_free(scan);
+    }
+
+  }
 
  err3:
   shapefile_close(sha);
@@ -625,5 +677,6 @@ int main(int argc, char **argv)
   shapefile_free(sha);
  err1:
   pairlist_free(remap);
+
   DBUG_RETURN(ret);
 }
