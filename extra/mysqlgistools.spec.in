@@ -5,23 +5,29 @@ License: LGPL
 URL: http://jcole.us/software/libmygis/
 Packager: Jeremy Cole <jeremy@jcole.us>
 
+Summary: Tools for MySQL GIS
+Group: Development/Libraries/C and C++
+
 Source: mysqlgistools-@VERSION@.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %prep
 %setup
 
 %build
-./configure --prefix=/usr
-make
+%configure --with-mysql
+make %{?_smp_mflags}
 
 %install
-make install
+rm -rf $RPM_BUILD_ROOT
+make install DESTDIR=$RPM_BUILD_ROOT
 
-Summary: Tools for MySQL GIS
-Group: Development/Libraries/C and C++
+%clean
+rm -rf $RPM_BUILD_ROOT
 
 %description 
 Tools for MySQL GIS
 
 %files 
-/usr/bin/mysqlgisimport
+%{_libdir}/libmysqlgistools.*
+%{_bindir}/mysqlgisimport

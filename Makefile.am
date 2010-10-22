@@ -1,4 +1,4 @@
-SUBDIRS = dbug . mysqlgisimport 
+SUBDIRS = dbug . mysqlgisimport extra
 
 MAINTAINERCLEANFILES = \
   aclocal.m4 configure config.status config.log config.h \
@@ -9,7 +9,7 @@ lib_LTLIBRARIES = libmysqlgistools.la
 libmysqlgistools_la_LDFLAGS = -version-info 0:0:0
 
 libmysqlgistools_la_SOURCES = \
-  mysqlgistools.c 
+  mysqlgistools.c mysqlgistools.h
 
 INCLUDES = -I$(srcdir) -I$(srcdir)/..
 
