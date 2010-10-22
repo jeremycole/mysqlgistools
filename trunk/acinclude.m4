@@ -1,5 +1,3 @@
-m4_include([libtool.m4])
-
 # System libraries
 
 AC_DEFUN([AC_LIB_Z_FOR_MYSQL], [
@@ -35,15 +33,18 @@ AC_DEFUN([AC_LIB_MYSQL], [
 
     SAVE_LIBS=$LIBS
     
-    mysql_lib="$mysql_lib /usr/lib /usr/lib/mysql \
-                /usr/local/lib /usr/local/lib/mysql \
+    mysql_lib="$mysql_lib \
+                /usr/lib /usr/lib64 \
+                /usr/lib/mysql /usr/lib64/mysql \
+                /usr/local/lib /usr/local/lib64 \
+                /usr/local/lib/mysql /usr/local/lib64/mysql \
                 /usr/local/mysql/lib"
     
     for dir in $mysql_lib; do
       if test "x$mysql_found" != "xyes"
       then
         AC_MSG_CHECKING([for libmysqlclient in $dir])
-        if test -f "$dir/libmysqlclient.a" ;
+        if test -f "$dir/libmysqlclient.a" -o -f "$dir/libmysqlclient.so";
         then
           AC_MSG_RESULT([yes])
           LIBS="-L$dir $SAVE_LIBS $LIBZ_LIB"
