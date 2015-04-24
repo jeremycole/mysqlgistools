@@ -1,0 +1,1 @@
+A set of utilities for working with MySQL GIS data using the libmygis library.
